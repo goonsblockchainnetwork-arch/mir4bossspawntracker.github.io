@@ -5,17 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MIR4 Boss Spawn Tracker</title>
     <style>
+        :root {
+            --bg: #ffffff;
+            --text: #000000;
+            --card: #f0f0f0;
+            --border: #ddd;
+        }
+        [data-theme="dark"] {
+            --bg: #121212;
+            --text: #ffffff;
+            --card: #1e1e1e;
+            --border: #333;
+        }
         body {
             display: flex;
             font-family: Arial, sans-serif;
             margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            transition: background 0.3s, color 0.3s;
         }
         nav {
             width: 200px;
-            background-color: #f0f0f0;
+            background-color: var(--card);
             padding: 10px;
-            height: 100vh;
+            height: 100%vh;
             overflow-y: auto;
+            border-right: 1px solid var(--border);
         }
         nav ul {
             list-style: none;
@@ -25,11 +41,13 @@
             cursor: pointer;
             padding: 10px;
             margin-bottom: 5px;
-            background-color: #ddd;
+            background-color: var(--border);
+            border-radius: 1px solid var(--border);
             border-radius: 5px;
         }
-        nav li:hover {
-            background-color: #ccc;
+        nav li:hover, nav li.active {
+            background-color: var(--text);
+            color: var(--bg);
         }
         main {
             flex: 1;
@@ -40,28 +58,79 @@
             width: 100%;
         }
         th, td {
-            border: 1px solid #ddd;
+            border: 1px solid var(--border);
             padding: 8px;
             text-align: left;
         }
         th {
-            background-color: #f2f2f2;
+            background-color: var(--card);
         }
+
+        /* Floating Dark Mode Button */
+        #theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: var(--text);
+            color: var(--bg);
+            border: none;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+
+        /* Centered Upcoming Bosses Modal */
+        #upcomingModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        .modal-content {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 720px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid var(--border);
+        }
+        .time-left { font-size: 1.4em; font-weight: bold; color: #ffeb3b; margin-top: 6px; }
+        .close-btn {
+            margin-top: 15px 10 5px;
+            padding: 8px 20px;
+            background: transparent;
+            border: 1px solid var(--text);
+            color: var(--text);
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .auto-close { font-size: 0.9em; color: #aaa; }
     </style>
 </head>
 <body>
+    <h1>GOONS</h1>
     <nav>
         <ul id="map-list"></ul>
     </nav>
+
     <main>
         <h1>MIR4 Boss Spawn Tracker</h1>
-        <p>Note: Timers are based on your local time. Adjust for your server's timezone (e.g., MIR4 often uses UTC+8 for Asia servers). Respawn-based bosses show intervals only, as kill times aren't tracked here.</p>
+        <p>Note: Timers are based on your local time. Adjust for your server's timezone (e.g., MIR4 often uses UTC+8 for Asia servers).</p>
         <table id="boss-table">
             <thead>
                 <tr>
                     <th>Boss Name</th>
                     <th>Location/Map</th>
-
                     <th>Next Spawn</th>
                     <th>Countdown</th>
                 </tr>
@@ -69,6 +138,32 @@
             <tbody></tbody>
         </table>
     </main>
+
+    <!-- Floating Dark Mode Toggle -->
+    <button id="theme-toggle" onclick="toggleTheme()">Dark</button>
+
+    <!-- Simple Table Modal -->
+    <div id="upcomingModal">
+        <div class="modal-content">
+            <h2>Next Bosses Spawning Soon</h2>
+            <table class="modal-table">
+                <thead>
+                    <tr>
+                        <th>Boss</th>
+                        <th>Location</th>
+                        <th>Time Left</th>
+                    </tr>
+                </thead>
+                <tbody id="modal-boss-list"></tbody>
+            </table>
+            <p></p>
+            <br>
+            <button class="close-btn" onclick="closeModal()">Close</button>
+            <p></p>
+            <div class="auto-close">Auto-close in <span id="autoCloseTimer">10</span>s</div>
+        </div>
+    </div>
+
     <script>
         // Boss data array - easy to add more bosses here
         // For daily: provide array of times in "HH:MM" format
@@ -124,23 +219,40 @@
             // name: "Yellow Boss", map: "Secret Peak", type: "respawn", interval: 60 * 60 * 1000 }, // Example hourly
         ];
 
-        // Extract unique maps for navbar
         const maps = [...new Set(bosses.map(b => b.map))];
+        const modal = document.getElementById('upcomingModal');
 
-        // Populate navbar
+        // Theme toggle
+        const themeBtn = document.getElementById('theme-toggle');
+        function toggleTheme() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
+            themeBtn.textContent = isDark ? 'Dark' : 'Light';
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        }
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            themeBtn.textContent = 'Light';
+        }
+
+        // Navigation
         const ul = document.getElementById('map-list');
         const allLi = document.createElement('li');
-        allLi.textContent = 'All Maps';
-        allLi.onclick = () => filterTable(null);
+        allLi.textContent = 'All Maps'; allLi.classList.add('active');
+        allLi.onclick = () => { setActive(allLi); filterTable(null); };
         ul.appendChild(allLi);
         maps.forEach(m => {
             const li = document.createElement('li');
             li.textContent = m;
-            li.onclick = () => filterTable(m);
+            li.onclick = () => { setActive(li); filterTable(m); };
             ul.appendChild(li);
         });
+        function setActive(el) {
+            document.querySelectorAll('nav li').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
+        }
 
-        // Calculate next spawn time
+        // Next spawn calculation
         function getNextSpawn(boss) {
             const now = new Date();
             if (boss.type === 'daily') {
@@ -156,70 +268,104 @@
                 let d = new Date(now);
                 const [h, m] = boss.time.split(':').map(Number);
                 d.setHours(h, m, 0, 0);
-                let dayDiff = boss.day - d.getDay();
-                if (dayDiff < 0 || (dayDiff === 0 && d < now)) dayDiff += 7;
-                d.setDate(d.getDate() + dayDiff);
+                let diff = boss.day - d.getDay();
+                if (diff < 0 || (diff === 0 && d < now)) diff += 7;
+                d.setDate(d.getDate() + diff);
                 return d;
-            } else if (boss.type === 'respawn') {
-                return null; // No next spawn calculable without kill time
             }
+            return null;
         }
 
-        // Populate the table with filtered bosses
-        function populateTable(filteredBosses) {
+        function getUpcoming(limit = 10) {
+            const list = bosses
+                .map(b => ({ b, next: getNextSpawn(b) }))
+                .filter(o => o.next)
+                .map(o => ({ ...o, diff: o.next - new Date() }))
+                .filter(o => o.diff > 0)
+                .sort((a,b) => a.diff - b.diff)
+                .slice(0, limit);
+            return list;
+        }
+
+        function showModal() {
+            const container = document.getElementById('modal-boss-list');
+            container.innerHTML = '';
+            const upcoming = getUpcoming(10);
+            upcoming.forEach(u => {
+                const h = Math.floor(u.diff / 3600000);
+                const m = Math.floor((u.diff % 3600000) / 60000);
+                container.innerHTML += `
+                    <tr>
+                        <th>${u.b.name}</th>
+                        <th>${u.b.location}</th>
+                        <th>${h}h ${m}m</th>
+                    </tr>`;
+            });
+            modal.style.display = 'flex';
+
+            let secs = 30;
+            document.getElementById('autoCloseTimer').textContent = secs;
+            clearInterval(window.autoCloseInt);
+            window.autoCloseInt = setInterval(() => {
+                if (--secs <= 0) closeModal();
+                document.getElementById('autoCloseTimer').textContent = secs;
+            }, 1000);
+        }
+        function closeModal() {
+            modal.style.display = 'none';
+            clearInterval(window.autoCloseInt);
+        }
+
+        // Table functions (unchanged)
+        function populateTable(filtered) {
             const tbody = document.querySelector('#boss-table tbody');
             tbody.innerHTML = '';
-            filteredBosses.forEach(b => {
+            filtered.forEach(b => {
                 const tr = document.createElement('tr');
-                const id = b.name.replace(/\s/g, '');
+                const id = b.name.replace(/\s/g,'');
                 tr.innerHTML = `
                     <td>${b.name}</td>
                     <td>${b.location}</td>
-                    
-                    <td id="next-${id}">${b.type === 'respawn' ? 'N/A (after kill)' : ''}</td>
-                    <td id="count-${id}"></td>
-                `;
+                    <td id="next-${id}"></td>
+                    <td id="count-${id}"></td>`;
                 tbody.appendChild(tr);
             });
         }
-
-        // Update countdowns
         function updateTimers() {
             bosses.forEach(b => {
-                const nextEl = document.getElementById(`next-${b.name.replace(/\s/g, '')}`);
-                const countEl = document.getElementById(`count-${b.name.replace(/\s/g, '')}`);
-                if (!nextEl || b.type === 'respawn') {
-                    if (countEl && b.type === 'respawn') countEl.textContent = 'Track manually after kill';
-                    return;
-                }
+                const nextEl = document.getElementById(`next-${b.name.replace(/\s/g,'')}`);
+                const countEl = document.getElementById(`count-${b.name.replace(/\s/g,'')}`);
+                if (!nextEl) return;
                 const next = getNextSpawn(b);
-                nextEl.textContent = next ? next.toLocaleString() : 'N/A';
                 if (next) {
+                    nextEl.textContent = next.toLocaleString();
                     const diff = next - new Date();
                     if (diff > 0) {
-                        const hours = Math.floor(diff / 3600000);
-                        const mins = Math.floor((diff % 3600000) / 60000);
-                        const secs = Math.floor((diff % 60000) / 1000);
-                        countEl.textContent = `${hours}h ${mins}m ${secs}s`;
+                        const h = Math.floor(diff / 3600000);
+                        const m = Math.floor((diff % 3600000) / 60000);
+                        const s = Math.floor((diff % 60000) / 1000);
+                        countEl.textContent = `${h}h ${m}m ${s}s`;
+                        countEl.style.color = diff < 600000 ? '#00ff00' : '';
                     } else {
-                        countEl.textContent = 'Spawned or past - check game';
+                        countEl.textContent = 'Spawned';
+                        countEl.style.color = '#00ff00';
                     }
                 }
             });
         }
-
-        // Filter table by map
-        let currentFilter = null;
         function filterTable(map) {
-            currentFilter = map;
             const filtered = map ? bosses.filter(b => b.map === map) : bosses;
             populateTable(filtered);
             updateTimers();
         }
 
-        // Initial load
+        // Init
         filterTable(null);
         setInterval(updateTimers, 1000);
+        setTimeout(() => {
+            updateTimers();
+            setTimeout(showModal, 600);
+        }, 200);
     </script>
 </body>
-</html> 
+</html>
