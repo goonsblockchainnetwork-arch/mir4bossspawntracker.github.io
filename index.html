@@ -25,6 +25,29 @@
             color: var(--text);
             transition: background 0.3s, color 0.3s;
         }
+
+        /* NEW: Header */
+        header {
+            background: var(--card);
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.95em;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .visitor-counter {
+            font-weight: bold;
+            color: #ff9800;
+        }
+        .header-title {
+            font-size: 1.4em;
+            font-weight: bold;
+        }
+
+        /* NEW: Navbar */
         nav {
             width: 200px;
             background-color: var(--card);
@@ -69,7 +92,7 @@
         /* Floating Dark Mode Button */
         #theme-toggle {
             position: fixed;
-            bottom: 20px;
+            bottom: 10px;
             right: 20px;
             width: 50px;
             height: 50px;
@@ -115,15 +138,67 @@
             cursor: pointer;
         }
         .auto-close { font-size: 0.9em; color: #aaa; }
+
+    footer {
+        padding: 25px 20px;
+        border-top: 1px solid var(--border);
+        background: var(--bg);
+        font-size: 0.9em;
+        color: var(--text);
+        opacity: 0.8;
+    }
+    .footer-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    .footer-left, .footer-right {
+        flex: 1;
+        min-width: 280px;
+    }
+    .footer-right {
+        text-align: right;
+    }
+    footer a {
+        color: var(--text);
+        text-decoration: none;
+        opacity: 0.8;
+        transition: opacity 0.2s;
+    }
+    footer a:hover {
+        opacity: 1;
+        text-decoration: underline;
+    }
+    .donate-link { font-weight: bold; color: #ff9800 !important; }
+    .social-links a { font-weight: bold; }
+
+    @media (max-width: 768px) {
+        .footer-content { flex-direction: column; text-align: center; }
+        .footer-right { text-align: center; }
+    }
+
     </style>
 </head>
 <body>
+
     <nav>
         <ul id="map-list"></ul>
     </nav>
 
     <main>
-        <h1>MIR4 Boss Spawn Tracker</h1>
+        <!-- HEADER -->
+        <header>
+            <div class="header-title">MIR4 Boss Spawn Tracker</div>
+            <div class="visitor-counter">
+                Unique Visitors: <span id="visitor-count">Loading...</span>
+            </div>
+     
+        </header>
+
+        <!-- <h1>MIR4 Boss Spawn Tracker</h1> -->
         <p>Note: Timers are based on your local time. Adjust for your server's timezone (e.g., MIR4 often uses UTC+8 for Asia servers).</p>
         <table id="boss-table">
             <thead>
@@ -136,6 +211,32 @@
             </thead>
             <tbody></tbody>
         </table>
+
+        <!-- FOOTER -->
+        <footer id="site-footer">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <p><strong>MIR4 Boss Spawn Tracker</strong><br>
+                    Developed with ❤️ by GOONS</p>
+                    <small>© 2025 MIR4 Tracker • Not affiliated with Wemade</small>
+                </div>
+                <div class="footer-right">
+                    <p>Support the project:</p>
+                    <p>
+                        <a href="https://ko-fi.com/yourkofi" target="_blank" class="donate-link">Ko-fi</a> • 
+                        <a href="https://www.paypal.me/yourpaypal" target="_blank" class="donate-link">PayPal</a> • 
+                        <a href="https://github.com/sponsors/yourusername" target="_blank" class="donate-link">Crypto</a>
+                    </p>
+                    <div class="social-links">
+                        <a href="https://discord.gg/yourdiscord" target="_blank">Discord</a> • 
+                        <a href="https://github.com/yourusername/mir4-boss-tracker" target="_blank">GitHub</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+        <br>
+        <br>
+
     </main>
 
     <!-- Floating Dark Mode Toggle -->
@@ -163,7 +264,20 @@
         </div>
     </div>
 
+
+
     <script>
+
+        // === VISITOR COUNTER USING countapi.xyz (free, no backend needed) ===
+        fetch('https://api.countapi.xyz/hit/mir4bosstracker.go-ons.com/visits')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('visitor-count').textContent = data.value.toLocaleString();
+            })
+            .catch(() => {
+                document.getElementById('visitor-count').textContent = '—';
+            });
+
         // Boss data array - easy to add more bosses here
         // For daily: provide array of times in "HH:MM" format
         // For weekly: provide day (0=Sunday, 1=Monday, ..., 6=Saturday) and time "HH:MM"
@@ -368,6 +482,3 @@
     </script>
 </body>
 </html>
-
-
-
