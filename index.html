@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIR4 Boss Spawn Tracker</title>
+    <style>
+        body {
+            display: flex;
+            font-family: Arial, sans-serif;
+            margin: 0;
+        }
+        nav {
+            width: 200px;
+            background-color: #f0f0f0;
+            padding: 10px;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        nav ul {
+            list-style: none;
+            padding: 0;
+        }
+        nav li {
+            cursor: pointer;
+            padding: 10px;
+            margin-bottom: 5px;
+            background-color: #ddd;
+            border-radius: 5px;
+        }
+        nav li:hover {
+            background-color: #ccc;
+        }
+        main {
+            flex: 1;
+            padding: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <ul id="map-list"></ul>
+    </nav>
+    <main>
+        <h1>MIR4 Boss Spawn Tracker</h1>
+        <p>Note: Timers are based on your local time. Adjust for your server's timezone (e.g., MIR4 often uses UTC+8 for Asia servers). Respawn-based bosses show intervals only, as kill times aren't tracked here.</p>
+        <table id="boss-table">
+            <thead>
+                <tr>
+                    <th>Boss Name</th>
+                    <th>Location/Map</th>
+
+                    <th>Next Spawn</th>
+                    <th>Countdown</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </main>
+    <script>
+        // Boss data array - easy to add more bosses here
+        // For daily: provide array of times in "HH:MM" format
+        // For weekly: provide day (0=Sunday, 1=Monday, ..., 6=Saturday) and time "HH:MM"
+        // For respawn (hourly/after kill): provide interval in milliseconds (e.g., 30 min = 30 * 60 * 1000)
+        // Add more types as needed by extending the getNextSpawn function
+        const bosses = [
+            // W1
+            { name: "Mata", location: "Bullface Forest", map: "World 1", type: "daily", times: ["02:00", "04:00", "06:00", "08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00", "22:00", "24:00"] },
+            { name: "Boltox", location: "Demon Bull Temple 1F", map: "World 1", type: "daily", times: ["01:00", "03:00", "05:00", "07:00", "09:00", "11:00", "13:00", "15:00", "17:00", "19:00", "21:00", "23:00"] },
+            { name: "Bullface Fiend King", location: "Bullface Fiend King's Sanctuary", map: "World 1", type: "daily", times: ["03:00", "06:00", "09:00", "12:00", "15:00", "18:00", "21:00", "24:00"] },
+            // W8
+            { name: "Yeo Wihuang", location: "Whitemaur Sealing Circle", map: "World 8", type: "daily", times: ["03:00", "06:00", "09:00", "12:00", "15:00", "18:00", "21:00", "24:00"] },
+            // W7
+            { name: "Taehyul", location: "Taehyul;s Garden", map: "World 7", type: "daily", times: ["01:00", "03:00", "05:00", "07:00", "09:00", "11:00", "13:00", "15:00", "17:00", "19:00", "21:00", "23:00"] },
+            { name: "Yiun", location: "Demonic Cult Main Hall", map: "World 7", type: "daily", times: ["02:00", "05:00", "08:00", "11:00", "14:00", "17:00", "20:00", "23:00"] },
+            // W4
+            { name: "Nefariox Obdurate Zenith", location: "Phantasia Desert", map: "World 4", type: "daily", times: ["02:00", "04:00", "06:00", "08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00", "22:00", "24:00"] },
+            { name: "Kurilaica", location: "Overlord Sealing Circle", map: "World 4", type: "daily", times: ["03:00", "06:00", "09:00", "12:00", "15:00", "18:00", "21:00", "24:00"] },
+            // W2
+            { name: "Juhui", location: "Redmoon Mountain", map: "World 2", type: "daily", times: ["02:30", "05:30", "08:30", "11:30", "14:30", "17:30", "20:30", "23:30"] },
+            // W5
+            { name: "Faluk", location: "Great Sabuk Wall Camp", map: "World 5", type: "daily", times: ["03:30", "06:30", "09:30", "12:30", "15:30", "18:30", "21:30", "24:30"] },
+            { name: "Tale Warper Fiend", location: "Illusion Temple", map: "World 5", type: "daily", times: ["01:30", "04:30", "07:30", "10:30", "13:30", "16:30", "19:30", "22:30"] },
+            // W3
+            { name: "Dusk Armado Emperor", location: "Viperbeast Plain", map: "World 3", type: "daily", times: ["01:30", "03:30", "05:30", "07:30", "09:30", "11:30", "13:30", "15:30", "17:30", "19:30", "21:30", "23:30"] },
+            { name: "Mara", location: "Rockut Tomb", map: "World 3", type: "daily", times: ["02:30", "05:30", "08:30", "11:30", "14:30", "17:30", "20:30", "23:30"] },
+            { name: "Tombbeast Gyo", location: "Nefariox Necropolis", map: "World 3", type: "daily", times: ["02:30", "08:30", "14:30", "20:30"] },
+            { name: "Boodo", location: "Rockut Tomb", map: "World 3", type: "daily", times: ["03:30", "09:30", "15:30", "21:30"] },
+            // W6
+            { name: "Cheol Mokgang", location: "Bicheon Town", map: "World 6", type: "daily", times: ["02:30", "04:30", "06:30", "08:30", "10:30", "12:30", "14:30", "16:30", "18:30", "20:30", "22:30", "24:30"] },
+            { name: "Hong Yeo", location: "Demoniac Mine", map: "World 6", type: "daily", times: ["01:30", "03:30", "05:30", "07:30", "09:30", "11:30", "13:30", "15:30", "17:30", "19:30", "21:30", "23:30"] },
+            { name: "Bicheon Sura", location: "Bicheon Town", map: "World 6", type: "daily", times: ["04:30", "10:30", "16:30", "22:30"] },
+            { name: "Wuihan", location: "Phantom Woods", map: "World 6", type: "daily", times: ["05:30", "11:30", "17:30", "23:30"] },
+            { name: "Obscene Yeticlops", location: "Bicheon Labyrinth", map: "World 6", type: "daily", times: ["06:30", "12:30", "18:30", "24:30"] },
+
+            // SPECIAL BOSS
+            { name: "Demon Spider of Hell Krukan", location: "Shackling Abaddon", map: "Shackling Abaddon", type: "weekly", day: 1, time: "23:00" }, // Monday
+            { name: "Black Flame Arch Demon Nerkan", location: "Black Flame Abaddon", map: "Black Flame Abaddon", type: "weekly", day: 2, time: "23:00" }, // Tuesday
+            { name: "Violet Demon God Turkan", location: "Violet Abaddon", map: "Violet Abaddon", type: "weekly", day: 4, time: "23:00" }, // Thursday
+            { name: "Crimson Emperor Utukan", location: "Crimson Abaddon", map: "Crimson Abaddon", type: "weekly", day: 5, time: "23:00" }, // Friday
+            
+            // name: "Leader's Chamber I", map: "Magic Square", type: "respawn", interval: 30 * 60 * 1000 }, // 30 min
+            // name: "Leader's Chamber II", map: "Magic Square", type: "respawn", interval: 45 * 60 * 1000 }, // 45 min
+            // name: "Leader's Chamber III", map: "Magic Square", type: "daily", times: ["03:00", "06:00", "09:00", "12:00", "15:00", "18:00", "21:00", "00:00"] },
+            // name: "Lower Left Boss", map: "Secret Peak", type: "daily", times: ["13:00", "19:00", "01:00", "07:00"] },
+            // name: "Upper Right Boss", map: "Secret Peak", type: "daily", times: ["16:00", "22:00", "04:00", "10:00"] },
+            // name: "Green Boss", map: "Secret Peak", type: "respawn", interval: 30 * 60 * 1000 }, // Example hourly respawn
+            // name: "Yellow Boss", map: "Secret Peak", type: "respawn", interval: 60 * 60 * 1000 }, // Example hourly
+        ];
+
+        // Extract unique maps for navbar
+        const maps = [...new Set(bosses.map(b => b.map))];
+
+        // Populate navbar
+        const ul = document.getElementById('map-list');
+        const allLi = document.createElement('li');
+        allLi.textContent = 'All Maps';
+        allLi.onclick = () => filterTable(null);
+        ul.appendChild(allLi);
+        maps.forEach(m => {
+            const li = document.createElement('li');
+            li.textContent = m;
+            li.onclick = () => filterTable(m);
+            ul.appendChild(li);
+        });
+
+        // Calculate next spawn time
+        function getNextSpawn(boss) {
+            const now = new Date();
+            if (boss.type === 'daily') {
+                let next = null;
+                boss.times.forEach(t => {
+                    const [h, m] = t.split(':').map(Number);
+                    let d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
+                    if (d < now) d.setDate(d.getDate() + 1);
+                    if (!next || d < next) next = d;
+                });
+                return next;
+            } else if (boss.type === 'weekly') {
+                let d = new Date(now);
+                const [h, m] = boss.time.split(':').map(Number);
+                d.setHours(h, m, 0, 0);
+                let dayDiff = boss.day - d.getDay();
+                if (dayDiff < 0 || (dayDiff === 0 && d < now)) dayDiff += 7;
+                d.setDate(d.getDate() + dayDiff);
+                return d;
+            } else if (boss.type === 'respawn') {
+                return null; // No next spawn calculable without kill time
+            }
+        }
+
+        // Populate the table with filtered bosses
+        function populateTable(filteredBosses) {
+            const tbody = document.querySelector('#boss-table tbody');
+            tbody.innerHTML = '';
+            filteredBosses.forEach(b => {
+                const tr = document.createElement('tr');
+                const id = b.name.replace(/\s/g, '');
+                tr.innerHTML = `
+                    <td>${b.name}</td>
+                    <td>${b.location}</td>
+                    
+                    <td id="next-${id}">${b.type === 'respawn' ? 'N/A (after kill)' : ''}</td>
+                    <td id="count-${id}"></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Update countdowns
+        function updateTimers() {
+            bosses.forEach(b => {
+                const nextEl = document.getElementById(`next-${b.name.replace(/\s/g, '')}`);
+                const countEl = document.getElementById(`count-${b.name.replace(/\s/g, '')}`);
+                if (!nextEl || b.type === 'respawn') {
+                    if (countEl && b.type === 'respawn') countEl.textContent = 'Track manually after kill';
+                    return;
+                }
+                const next = getNextSpawn(b);
+                nextEl.textContent = next ? next.toLocaleString() : 'N/A';
+                if (next) {
+                    const diff = next - new Date();
+                    if (diff > 0) {
+                        const hours = Math.floor(diff / 3600000);
+                        const mins = Math.floor((diff % 3600000) / 60000);
+                        const secs = Math.floor((diff % 60000) / 1000);
+                        countEl.textContent = `${hours}h ${mins}m ${secs}s`;
+                    } else {
+                        countEl.textContent = 'Spawned or past - check game';
+                    }
+                }
+            });
+        }
+
+        // Filter table by map
+        let currentFilter = null;
+        function filterTable(map) {
+            currentFilter = map;
+            const filtered = map ? bosses.filter(b => b.map === map) : bosses;
+            populateTable(filtered);
+            updateTimers();
+        }
+
+        // Initial load
+        filterTable(null);
+        setInterval(updateTimers, 1000);
+    </script>
+</body>
+</html> 
