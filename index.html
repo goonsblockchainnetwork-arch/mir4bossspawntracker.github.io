@@ -223,13 +223,13 @@
                 <div class="footer-right">
                     <p>Support the project:</p>
                     <p>
-                        <a href="https://ko-fi.com/yourkofi" target="_blank" class="donate-link">Ko-fi</a> • 
-                        <a href="https://www.paypal.me/yourpaypal" target="_blank" class="donate-link">PayPal</a> • 
-                        <a href="https://github.com/sponsors/yourusername" target="_blank" class="donate-link">Crypto</a>
+                        <a href="https://ko-fi.com/goonsnetwork" target="_blank" class="donate-link">Ko-fi</a> • 
+                        <a href="#" target="_blank" class="donate-link">PayPal</a> • 
+                        <a href="#" target="_blank" class="donate-link">Payoneer</a>
                     </p>
+                    <p><small class="donate-link">USDT: </small><p>
+                    <small class="donate-link">WEMIX: 0x2468e00f3e684cedf263ee4c9aa89de82001ecb1</small>
                     <div class="social-links">
-                        <a href="https://discord.gg/yourdiscord" target="_blank">Discord</a> • 
-                        <a href="https://github.com/yourusername/mir4-boss-tracker" target="_blank">GitHub</a>
                     </div>
                 </div>
             </div>
@@ -286,14 +286,14 @@
         const bosses = [
         // Cryptic Sanctuary
             { name: "Brawler Chubbee", location: "Cryptic Sanctuary", map: "Cryptic Sanctuary", type: "daily", times: ["03:00", "06:00", "09:00", "12:00", "15:00", "18:00", "21:00", "24:00"] },
-            { name: "Madened Irua", location: "Cryptic Sanctuary", map: "Cryptic Sanctuary", type: "daily", times: ["01:00", "04:00", "07:00", "10:00", "13:00", "16:00", "19:00", "22:00"] },
+            { name: "Madened Irua", location: "Cryptic Sanctuary", map: "Cryptic Sanctuary", type: "daily", times: ["03:00", "01:00", "04:00", "07:00", "10:00", "13:00", "16:00", "19:00", "22:00"] },
             { name: "Demon Emperor Reaper", location: "Cryptic Sanctuary", map: "Cryptic Sanctuary", type: "daily", times: ["02:00", "05:00", "08:00", "11:00", "14:00", "17:00", "20:00", "23:00"] },
         // W1
             { name: "Mata", location: "Bullface Forest", map: "World 1", type: "daily", times: ["02:00", "04:00", "06:00", "08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00", "22:00", "24:00"] },
             { name: "Boltox", location: "Demon Bull Temple 1F", map: "World 1", type: "daily", times: ["01:00", "03:00", "05:00", "07:00", "09:00", "11:00", "13:00", "15:00", "17:00", "19:00", "21:00", "23:00"] },
             { name: "Bullface Fiend King", location: "Bullface Fiend King's Sanctuary", map: "World 1", type: "daily", times: ["03:00", "06:00", "09:00", "12:00", "15:00", "18:00", "21:00", "24:00"] },
             // W8
-            { name: "Yeo Wihuang", location: "Whitemaur Sealing Circle", map: "World 8", type: "daily", times: ["01:00", "05:00", "09:00", "13:00", "17:00", "21:00"] },
+            { name: "Yeo Wihuang", location: "Whitemaur Sealing Circle", map: "World 8", type: "daily", times: ["03:00", "06:00", "09:00", "12:00", "15:00", "18:00", "21:00", "24:00"] },
             // W7
             { name: "Taehyul", location: "Taehyul;s Garden", map: "World 7", type: "daily", times: ["01:00", "03:00", "05:00", "07:00", "09:00", "11:00", "13:00", "15:00", "17:00", "19:00", "21:00", "23:00"] },
             { name: "Yiun", location: "Demonic Cult Main Hall", map: "World 7", type: "daily", times: ["02:00", "05:00", "08:00", "11:00", "14:00", "17:00", "20:00", "23:00"] },
@@ -416,7 +416,7 @@
             });
             modal.style.display = 'flex';
 
-            let secs = 30;
+            let secs = 15;
             document.getElementById('autoCloseTimer').textContent = secs;
             clearInterval(window.autoCloseInt);
             window.autoCloseInt = setInterval(() => {
@@ -482,5 +482,3 @@
     </script>
 </body>
 </html>
-
-
